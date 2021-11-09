@@ -1,0 +1,37 @@
+#!/usr/bin/env bash
+name=1456811055019081728t1
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+BLUE='\033[0;34m'
+PURPLE='\033[0;35m'
+CYAN='\033[0;36m'
+WHITE='\033[0;37m'
+NOCOLOR='\033[0m' # No Color
+
+export PS1="\[\e]0;\u@secretless-k8s-demo: \w\a\]${debian_chroot:+($debian_chroot)}\u@secretless-k8s-demo:\w\$ "
+
+echo Bringing up a cluster1
+
+bash -c '/usr/local/bin/kind create cluster --image kindest/node:v1.17.0 --name '$name'-cluster1 --config /root/kind.yml'
+echo Modifying Kubernetes config to point to Kind master node
+MASTER_IP=$(docker inspect --format='{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' $name-cluster1-control-plane)
+sed -i "s/^    server:.*/    server: https:\/\/$MASTER_IP:6443/" $HOME/.kube/config
+mv $HOME/.kube/config  $HOME/.kube/config-c1
+cp /data/config-d  $HOME/.kube/config
+
+
+echo Bringing up a cluster2
+bash -c '/usr/local/bin/kind create cluster --image kindest/node:v1.17.0 --name '$name'-cluster2 --config /root/kind.yml'
+echo Modifying Kubernetes config to point to Kind master node
+MASTER_IP=$(docker inspect --format='{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' $name-cluster2-control-plane)
+sed -i "s/^    server:.*/    server: https:\/\/$MASTER_IP:6443/" $HOME/.kube/config
+mv  $HOME/.kube/config  $HOME/.kube/config-c2
+cp /data/config-d  $HOME/.kube/config
+echo Bringing up a cluster3
+bash -c '/usr/local/bin/kind create cluster --image kindest/node:v1.17.0 --name '$name'-cluster3 --config /root/kind.yml'
+echo Modifying Kubernetes config to point to Kind master node
+MASTER_IP=$(docker inspect --format='{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' $name-cluster3-control-plane)
+sed -i "s/^    server:.*/    server: https:\/\/$MASTER_IP:6443/" $HOME/.kube/config
+mv  $HOME/.kube/config  $HOME/.kube/config-c3
+cp /data/config-d  $HOME/.kube/config
+touch /data/initialized

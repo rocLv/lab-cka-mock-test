@@ -1,0 +1,27 @@
+#!/bin/bash
+echo "集群列表"
+echo "1.cluster1"
+echo "2.cluster2"
+echo "3.cluster3"
+read -p "请输入要使用的集群id:  "  ClusterId
+cd $HOME/.kube/
+case $ClusterId in
+        '1' )
+         echo "cluster1"
+         cp config-c1 config
+         kubectl cluster-info
+                ;;
+        '2' )
+         echo "cluster2"
+         cp config-c2 config
+         kubectl cluster-info
+        ;;
+    '3' )
+         echo "cluster3"
+         cp config-c3 config
+         kubectl cluster-info
+        ;;
+     * )
+         echo "输入错误，请输入ID号"
+        ;;
+esac

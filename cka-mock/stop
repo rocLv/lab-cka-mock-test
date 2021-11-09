@@ -1,0 +1,6 @@
+#!/bin/bash
+docker exec -it $1  kind delete cluster --name $1-cluster1
+docker exec -it $1  kind delete cluster --name $1-cluster2
+docker exec -it $1  kind delete cluster --name $1-cluster3
+docker stop $1 &&  docker rm $1
+
