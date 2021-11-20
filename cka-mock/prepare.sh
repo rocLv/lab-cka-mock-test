@@ -1,6 +1,10 @@
 #!/bin/bash
 set -e
 
+WHITE='\033[0;97m'       # White
+YELLOW='\033[0;93m' 
+RED='\033[0;91m'
+
 CLUSTER_MASTERS=('cluster1-master1' 'cluster2-master1' 'cluster3-master1') 
 CLUSTER_WORKERS=('cluster1-worker1' 'cluster1-worker2' 'cluster2-worker1' 'cluster3-worker1' 'cluster3-worker2')
 
@@ -8,13 +12,13 @@ MASTER_IMAGE='roclv/k8s-master'
 WORKER_IMAGE='roclv/k8s'
 
 stop_container () {
-  if [  "$(docker ps -q -f name=$1)" ]; then
-    echo Stoping $1
+  if [  "$(docker ps -q -f name=${1}$)" ]; then
+    echo -e "${RED}Stoping $1 ${WHITE}"
     docker stop $1
   fi
 
-  if [ "$(docker ps -aq -f status=exited -f name=$1)" ]; then
-    echo Removing $1
+  if [ "$(docker ps -aq -f status=exited -f name=${1}$)" ]; then
+    echo -e "${RED}Removing $1 ${WHITE}"
     docker rm $1
   fi
 }
@@ -22,7 +26,7 @@ stop_container () {
 create_container () {
   stop_container $1
 
-  echo Starting $1
+  echo -e "${YELLOW}Starting $1 ${WHITE}"
 
   docker run -d --name $1 --privileged $2
 }
@@ -40,15 +44,17 @@ test_master_initialized () {
   return $?
 }
 
+stop_container $1
+
 for cluster in "${CLUSTER_MASTERS[@]}"
 do
-  echo Creating $cluster
+  echo -e "${YELLOW}Creating $1-$cluster ${WHITE}"
   create_container $1-$cluster $MASTER_IMAGE
 done
 
 for worker in "${CLUSTER_WORKERS[@]}"
 do
-  echo Creating $worker
+  echo -e "${YELLOW}Creating $worker ${WHITE}"
   create_container $1-$worker $WORKER_IMAGE
 done
 
@@ -56,7 +62,7 @@ MASTER1=$1-cluster1-master1
 C1WORKER1=$1-cluster1-worker1
 C1WORKER2=$1-cluster1-worker2
 
-echo $C1WORKER1 joining in master $MASTER1
+echo -e "${YELLOW} $C1WORKER1 joining in master $MASTER1 ${WHITE}"
 until docker exec $MASTER1 kubectl get nodes &> /dev/null
 do
   sleep 1
@@ -69,7 +75,7 @@ join_cluster $C1WORKER2 $MASTER1
 MASTER2=$1-cluster2-master1
 C2WORKER1=$1-cluster2-worker1
  
-echo $C1WORKER1 joining in master $MASTER1
+echo -e "${YELLOW} $C2WORKER1 joining in master $MASTER2 ${WHITE}"
 until docker exec $MASTER2 kubectl get nodes &> /dev/null
 do
   sleep 1
@@ -81,7 +87,7 @@ MASTER3=$1-cluster3-master1
 C3WORKER1=$1-cluster3-worker1
 C3WORKER2=$1-cluster3-worker2
 
-echo $C3WORKER1 joining in master $MASTER3
+echo -e "${YELLOW} $C3WORKER1 joining in master $MASTER3 ${WHITE}"
 until docker exec $MASTER1 kubectl get nodes &> /dev/null
 do
   sleep 1
@@ -91,13 +97,17 @@ join_cluster $C3WORKER1 $MASTER3
 join_cluster $C3WORKER2 $MASTER3
 
 # Merge 3 clusters config
+echo -e "${YELLOW}Merging 3 clusters config files .. ${WHITE}"
+
 docker exec $MASTER1 cp -L /root/.kube/config /root/config
 docker exec $MASTER1 cp -L /root/.kube/config /root/.kube/k8s-c1-H-config
 rm -f k8s-c2-AC-config
 rm -f k8s-c3-CCC-config
 docker cp -L $MASTER2:/root/.kube/config k8s-c2-AC-config && docker cp k8s-c2-AC-config $MASTER1:/root/.kube/k8s-c2-AC-config
 docker cp -L $MASTER3:/root/.kube/config k8s-c3-CCC-config && docker cp k8s-c3-CCC-config $MASTER1:/root/.kube/k8s-c3-CCC-config
-docker cp steps-shell $MASTER:/data/
+
+echo -e "${YELLOW}Copy steps shell ${WHITE}"
+docker cp steps-shell $MASTER1:/data/
 
 KUBECONFIG=""
 CONTEXTS=('k8s-c1-H' 'k8s-c2-AC' 'k8s-c3-CCC')
@@ -115,3 +125,4 @@ KUBECONFIG="${KUBECONFIG:1}"
 
 docker exec $MASTER1 sh -c "export KUBECONFIG=$KUBECONFIG && kubectl config view --flatten > /tmp/config && mv -f /tmp/config ~/.kube/config"
 
+docker rename $MASTER1 $1
