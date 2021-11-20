@@ -132,7 +132,7 @@ echo -e "${YELLOW} Rename $MASTER1 to $1 ${WHITE}"
 docker rename $MASTER1 $1
 
 echo -e "${YELLOW}Coping steps shell ${WHITE}"
-docker cp /root/lab-shell/cka-mock/steps-shell $1:/root/steps-shell
+docker cp /root/lab-shell/cka-mock/step-scripts $1:/root/.kube/step-scripts
 echo -e "${YELLOW}Copied steps shell${GREEN}done${WHITE}"
 
 echo -e "${GREEN} Success! $1 ${WHITE}"
