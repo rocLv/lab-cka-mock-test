@@ -1,12 +1,18 @@
 #!/bin/bash
 set -e
 
-# 脚本中必须使用绝对路径！！！
-
 WHITE='\033[0;97m'       # White
 YELLOW='\033[0;93m' 
 RED='\033[0;91m'
 GREEN='\033[0;92m' 
+# 脚本中必须使用绝对路径！！！
+if [[ $(docker ps -a -q --filter ancestor=roclv/k8s-master | wc -l) -gt 8 ]]
+then
+  echo -e "${RED}Too much containers running...${WHITE}"
+  echo -e "${RED}异常退出！${WHITE}"
+  exit 1
+fi
+
 
 CLUSTER_MASTERS=('cluster1-master1' 'cluster2-master1' 'cluster3-master1') 
 CLUSTER_WORKERS=('cluster1-worker1' 'cluster1-worker2' 'cluster2-worker1' 'cluster3-worker1' 'cluster3-worker2')
